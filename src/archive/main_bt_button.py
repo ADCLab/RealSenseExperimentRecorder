@@ -12,12 +12,11 @@ import time
 import numpy as np
 import pyrealsense2 as rs
 from PIL import Image
-#from pynput import keyboard
 from pandas import read_csv, DataFrame
 from dotenv import load_dotenv
 from utils import ExperimentState
 from window import Window
-import keyboard
+from hotkeys import monitor_ctrl_hotkey
 
 def monitor_bluetooth_device_t01(window):
     """Monitor only the Bluetooth device named 'T01'."""
@@ -268,8 +267,10 @@ if __name__ == "__main__":
         print("Ctrl_L key released")
         window.mark_date()  # Trigger mark_date on Ctrl_L release
 
-    # Hook the Ctrl key release
-    keyboard.on_release_key('ctrl', lambda e: on_ctrl_release())
+    # Hook the Ctrl key release via python-evdev
+    ctrl_thread = Thread(target=monitor_ctrl_hotkey, args=(on_ctrl_release,))
+    ctrl_thread.daemon = True
+    ctrl_thread.start()
 
     # Keyboard
     #def on_release(key):

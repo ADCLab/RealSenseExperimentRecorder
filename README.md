@@ -19,6 +19,10 @@ RealSenseExperimentRecorder streamlines data collection for sorting-and-placing 
    pip install -r requirements.txt
    ```
    > Building `evdev` requires system headers: install `python3.X-dev` and a C compiler (`build-essential` on Debian/Ubuntu).
+   > Tkinter also depends on system Tcl/Tk libs. Install them once per machine:
+   > ```bash
+   > sudo apt-get install python3-tk tk-dev libtk8.6 libtcl8.6
+   > ```
 3. **Populate settings** under `settings/env/`. Each `.env` file should define at minimum:
    ```ini
    EXPERIMENT_NAME="SortAndPlaceExpert"
