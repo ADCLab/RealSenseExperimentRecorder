@@ -141,7 +141,8 @@ def main(myExpState: str):
     set_rows(myExpState, row1, row2, data_rows, trials)
 
     # Write to the file
-    with open(f"data/{myExpState.participantId}/{myExpState.participantId}.csv", "w", newline="") as file:
+    output_csv = os.path.join(myExpState.data_path, f"{myExpState.participantId}.csv")
+    with open(output_csv, "w", newline="") as file:
         writer = csv.writer(file)
 
         # Header
@@ -247,6 +248,7 @@ if __name__ == "__main__":
     experimentTag = os.getenv("EXPERIMENT_TAG").strip()
     cameraConfig = os.getenv("CAMERA_CONFIGURATION").strip()
     surveyURL = os.getenv("SURVEY_URL").strip()
+    dataFolderRoot = os.getenv("DATA_FOLDER", "data").strip()
     requireBluetooth = os.getenv("REQUIRE_BLUETOOTH", "true").strip().lower() in ("1", "true", "yes", "y")
 
     # Check for the presence of the Bluetooth device "T01" only if required
@@ -256,8 +258,11 @@ if __name__ == "__main__":
             print("Device 'T01' not found. Exiting program.")
             sys.exit(1)
 
+    experiment_data_root = os.path.join(dataFolderRoot, f"{experimentName}_{experimentTag}")
+    os.makedirs(experiment_data_root, exist_ok=True)
+
     # Load participants files
-    participants_file = f'participants_{experimentName}.csv'
+    participants_file = os.path.join(experiment_data_root, f'participants_{experimentName}.csv')
     participantsSet = set()
     if os.path.exists(participants_file):
         participants = read_csv(participants_file, index_col=False)
@@ -270,10 +275,11 @@ if __name__ == "__main__":
     participantId = getNextID(participantsSet)
     myExpState = ExperimentState(experimentTag, participants_file, numTrials, participantId)
     myExpState.require_bluetooth = requireBluetooth
+    myExpState.data_root = experiment_data_root
 
-    dataFolder = "data"
-    dataPath = os.path.join(dataFolder, myExpState.participantId)
+    dataPath = os.path.join(experiment_data_root, myExpState.participantId)
     os.makedirs(dataPath, exist_ok=True)
+    myExpState.data_path = dataPath
 
    # Camera
     try:
@@ -294,7 +300,8 @@ if __name__ == "__main__":
         
         config.enable_stream(rs.stream.color, 848, 480, rs.format.rgb8, 30)
         config.enable_stream(rs.stream.depth, 848, 480, rs.format.z16, 30)
-        config.enable_record_to_file(f"data/{myExpState.participantId}/{myExpState.participantId}.bag")
+        bag_path = os.path.join(myExpState.data_path, f"{myExpState.participantId}.bag")
+        config.enable_record_to_file(bag_path)
         
         # Set up alignment
         align_to = rs.stream.color
@@ -313,7 +320,8 @@ if __name__ == "__main__":
 
             color_image = np.asanyarray(color_frame.get_data())
             im = Image.fromarray(color_image)
-            im.save(f"data/{myExpState.participantId}/{myExpState.participantId}_{identifier}.png")
+            snapshot_path = os.path.join(myExpState.data_path, f"{myExpState.participantId}_{identifier}.png")
+            im.save(snapshot_path)
 
         myExpState.save_snapshot = save_snapshot
 
