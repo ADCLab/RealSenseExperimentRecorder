@@ -321,16 +321,12 @@ class Window:
         """Handle closing the window."""
         # Check closing type
         if self.expState.is_trials_complete is False:
-            res = tkinter.messagebox.askyesnocancel(
-                "Exit Program", "Do you want to save the current data?"
+            res = tkinter.messagebox.askokcancel(
+                "Exit Program", "Save current data and exit?"
             )
-            if res is None:
+            if not res:
                 return
-            elif res is False:
-                self.window.quit()
-                return
-            else:
-                self.expState.is_trials_complete = True
+            self.expState.is_trials_complete = True
 
         # Wait for main to finish writing to the file
         while self.expState.is_finished_main is False:
@@ -339,6 +335,10 @@ class Window:
         if self.time_limit_job:
             self.window.after_cancel(self.time_limit_job)
             self.time_limit_job = None
+        
+        stop_camera = getattr(self.expState, "stop_camera", None)
+        if callable(stop_camera):
+            stop_camera()
 
         self.window.quit()
 

@@ -318,6 +318,15 @@ if __name__ == "__main__":
             pipeline.start(config)
               
         myExpState.start_camera = start_camera
+        
+        def stop_camera():
+            """Stop the RealSense pipeline if running."""
+            try:
+                pipeline.stop()
+            except Exception:
+                pass
+              
+        myExpState.stop_camera = stop_camera
             
         def save_snapshot(identifier: str):
             """Save a picture from the camera."""
