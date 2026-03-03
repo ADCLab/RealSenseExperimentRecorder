@@ -249,6 +249,12 @@ if __name__ == "__main__":
     cameraConfig = os.getenv("CAMERA_CONFIGURATION").strip()
     surveyURL = os.getenv("SURVEY_URL").strip()
     dataFolderRoot = os.getenv("DATA_FOLDER", "data").strip()
+    timeLimitMinutes = os.getenv("TIME_LIMIT", "0").strip()
+    try:
+        time_limit_seconds = max(0, float(timeLimitMinutes) * 60)
+    except ValueError:
+        print(f"Invalid TIME_LIMIT '{timeLimitMinutes}', defaulting to 0.")
+        time_limit_seconds = 0
     requireBluetooth = os.getenv("REQUIRE_BLUETOOTH", "true").strip().lower() in ("1", "true", "yes", "y")
 
     # Check for the presence of the Bluetooth device "T01" only if required
@@ -275,6 +281,7 @@ if __name__ == "__main__":
     participantId = getNextID(participantsSet)
     myExpState = ExperimentState(experimentTag, participants_file, numTrials, participantId)
     myExpState.require_bluetooth = requireBluetooth
+    myExpState.time_limit_seconds = time_limit_seconds
     myExpState.data_root = experiment_data_root
 
     dataPath = os.path.join(experiment_data_root, myExpState.participantId)

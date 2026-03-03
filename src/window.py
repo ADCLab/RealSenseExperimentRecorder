@@ -23,6 +23,8 @@ class Window:
         """Initialize the window."""
         self.create_window()
         self.expState = expState
+        self.time_limit_job = None
+        self.time_limit_triggered = False
         self.create_header_frame()
         self.create_input_frame()
         self.create_button_frame()
@@ -243,7 +245,7 @@ class Window:
             with open(self.expState.participants_file,'a') as fout:
                 fout.write('%s,%s,%f,%s\n'%(self.expState.participantId,self.expState.tag,self.expState.startEpochTime,self.expState.startDateTime))
 
-           
+            self.start_time_limit_timer()
 
         # Change the button
         self.start_button.config(state="disabled", background="light gray")
@@ -334,4 +336,46 @@ class Window:
         while self.expState.is_finished_main is False:
             time.sleep(0.05)
 
+        if self.time_limit_job:
+            self.window.after_cancel(self.time_limit_job)
+            self.time_limit_job = None
+
         self.window.quit()
+
+    def start_time_limit_timer(self):
+        """Begin countdown for the experiment time limit, if configured."""
+        if getattr(self.expState, "time_limit_seconds", 0) <= 0:
+            return
+        if self.expState.time_limit_deadline:
+            return
+        self.expState.time_limit_deadline = datetime.now().timestamp() + self.expState.time_limit_seconds
+        self.time_limit_job = self.window.after(500, self.check_time_limit)
+
+    def check_time_limit(self):
+        """Poll the time limit and trigger expiration when reached."""
+        self.time_limit_job = None
+        if self.expState.is_trials_complete or self.expState.time_limit_deadline is None:
+            return
+
+        if datetime.now().timestamp() >= self.expState.time_limit_deadline:
+            self.handle_time_limit_expired()
+            return
+
+        self.time_limit_job = self.window.after(500, self.check_time_limit)
+
+    def handle_time_limit_expired(self):
+        """Gracefully stop the experiment when the time limit is reached."""
+        if self.time_limit_triggered:
+            return
+
+        self.time_limit_triggered = True
+        print("Time limit reached; stopping experiment.")
+
+        if Window.is_in_trial:
+            self.stop_trial()
+
+        self.start_button.config(state="disabled", background="light gray")
+        self.stop_button.config(state="disabled", background="light gray")
+        self.reset_button.config(state="disabled", background="light gray")
+        self.expState.is_trials_complete = True
+        self.window.after(0, self.close)

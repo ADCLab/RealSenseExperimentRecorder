@@ -24,6 +24,8 @@ class ExperimentState:
         self.is_trials_complete: bool = False
         self.is_finished_main: bool = False
         self.t01_present: bool = False
+        self.time_limit_seconds = 0
+        self.time_limit_deadline = None
 
 def resource_path(relative_path: str):
     """Get absolute path to resource."""
