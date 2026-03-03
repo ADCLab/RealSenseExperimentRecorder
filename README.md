@@ -34,9 +34,9 @@ RealSenseExperimentRecorder streamlines data collection for sorting-and-placing 
    ```
 
 ## Building the Executable
-Use `build4.sh`, passing the desired env filename (or path). The script resolves the camera configuration automatically.
+Use `build.sh`, passing the desired env filename (or path). The script resolves the camera configuration automatically.
 ```bash
-./build4.sh settings/env/ExpertSortPlaceExperiment.env
+./build.sh settings/env/ExpertSortPlaceExperiment.env
 ```
 The build process:
 - Installs/updates dependencies inside `.venv`.
