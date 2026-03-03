@@ -23,6 +23,10 @@ RealSenseExperimentRecorder streamlines data collection for sorting-and-placing 
    > ```bash
    > sudo apt-get install python3-tk tk-dev libtk8.6 libtcl8.6
    > ```
+   > Desktop shortcut trust flags rely on `gio` (GLib). Install it with:
+   > ```bash
+   > sudo apt-get install libglib2.0-bin
+   > ```
 3. **Populate settings** under `settings/env/`. Each `.env` file should define at minimum:
    ```ini
    EXPERIMENT_NAME="SortAndPlaceExpert"

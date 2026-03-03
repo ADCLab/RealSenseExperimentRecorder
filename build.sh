@@ -84,6 +84,9 @@ source ./.venv/bin/activate
 pip install --upgrade pip
 pip install --upgrade -r requirements.txt
 
+# Name for the generated executable
+EXECUTABLE_NAME="puzzleExperimentRecorder"
+
 # Generate the executable
 TMPDIR_DIST=$(mktemp -d)
 TMPDIR_BUILD=$(mktemp -d)
@@ -93,7 +96,7 @@ pyinstaller \
     -w \
     --clean \
     --hidden-import=tkinter \
-    --name "${EXPERIMENT_NAME}_${EXPERIMENT_TAG}" \
+    --name "${EXECUTABLE_NAME}" \
     --add-data "${IMAGE_ASSET}:./src" \
     --add-data "${ENV_FILE}:./experimentSettings.env" \
     --add-data "${CAMERA_CONFIGURATION}:./${CAMERA_CONFIGURATION}" \
@@ -102,7 +105,7 @@ pyinstaller \
     --workpath "${TMPDIR_BUILD}"
 
 # Move the generated executable to the dynamically named folder
-OUTPUT_EXECUTABLE="${TMPDIR_DIST}/${EXPERIMENT_NAME}_${EXPERIMENT_TAG}"
+OUTPUT_EXECUTABLE="${TMPDIR_DIST}/${EXECUTABLE_NAME}"
 if [[ -f "$OUTPUT_EXECUTABLE" ]]; then
     # Move the executable to the dynamically named DIST_EXPERIMENT_FOLDER
     mv "$OUTPUT_EXECUTABLE" "${DIST_EXPERIMENT_FOLDER}/"
@@ -116,8 +119,36 @@ if [[ -f "$OUTPUT_EXECUTABLE" ]]; then
     copy_asset_to_dist "$CAMERA_CONFIGURATION" "${DIST_EXPERIMENT_FOLDER}/$(basename "$CAMERA_CONFIGURATION")"
     echo "Camera configuration file successfully copied to ${DIST_EXPERIMENT_FOLDER}/"
 
+    # Copy puzzle icon asset to the distribution folder
+    PUZZLE_ICON="${SCRIPT_DIR}/src/puzzle.png"
+    if [[ -f "$PUZZLE_ICON" ]]; then
+        copy_asset_to_dist "$PUZZLE_ICON" "${DIST_EXPERIMENT_FOLDER}/puzzle.png"
+        echo "puzzle.png copied to ${DIST_EXPERIMENT_FOLDER}/"
+    else
+        echo "Warning: puzzle.png not found at ${PUZZLE_ICON}."
+    fi
+
+    # Create an askpass helper script for GUI password prompts
+    ASKPASS_SCRIPT="${DIST_EXPERIMENT_FOLDER}/askpass.sh"
+    cat > "$ASKPASS_SCRIPT" <<'EOF'
+#!/bin/bash
+zenity --password --title="Authentication"
+EOF
+    chmod +x "$ASKPASS_SCRIPT"
+    echo "askpass.sh created at ${ASKPASS_SCRIPT}"
+
+    # Create a helper script to launch the executable with askpass configured
+    RUN_SCRIPT="${DIST_EXPERIMENT_FOLDER}/run_puzzleExperimentRecorder.sh"
+    cat > "$RUN_SCRIPT" <<EOF
+#!/bin/bash
+export SUDO_ASKPASS="${DIST_EXPERIMENT_FOLDER}/askpass.sh"
+sudo -A ./${EXECUTABLE_NAME}
+EOF
+    chmod +x "$RUN_SCRIPT"
+    echo "run_puzzleExperimentRecorder.sh created at ${RUN_SCRIPT}"
+
     # Resolve the executable and icon paths for the desktop shortcut
-    EXECUTABLE_PATH="${DIST_EXPERIMENT_FOLDER}/${EXPERIMENT_NAME}_${EXPERIMENT_TAG}"
+    EXECUTABLE_PATH="${DIST_EXPERIMENT_FOLDER}/${EXECUTABLE_NAME}"
     ICON_SOURCE="$IMAGE_ASSET"
     if [[ ! -f "$ICON_SOURCE" && -f "${SCRIPT_DIR}/${IMAGE_ASSET}" ]]; then
         ICON_SOURCE="${SCRIPT_DIR}/${IMAGE_ASSET}"
@@ -131,14 +162,31 @@ if [[ -f "$OUTPUT_EXECUTABLE" ]]; then
 [Desktop Entry]
 Version=1.0
 Type=Application
-Name=${EXPERIMENT_NAME}_${EXPERIMENT_TAG}
-Exec=gnome-terminal -- bash -c 'cd "${DIST_EXPERIMENT_FOLDER}" && "${EXECUTABLE_PATH}"'
+Name=run_puzzleExperimentRecorder
+Exec=gnome-terminal -- bash -c 'cd "${DIST_EXPERIMENT_FOLDER}" && ./run_puzzleExperimentRecorder.sh'
 Icon=${ICON_SOURCE}
-Terminal=false
+Terminal=true
 Path=${DIST_EXPERIMENT_FOLDER}
 EOF
     chmod +x "$DESKTOP_SHORTCUT"
     echo "Desktop shortcut created at $DESKTOP_SHORTCUT"
+
+    # Copy shortcut to Desktop and mark as trusted
+    DESKTOP_FOLDER="$HOME/Desktop"
+    if [[ -d "$DESKTOP_FOLDER" ]]; then
+        DESKTOP_SHORTCUT_COPY="${DESKTOP_FOLDER}/run_puzzleExperimentRecorder.desktop"
+        cp "$DESKTOP_SHORTCUT" "$DESKTOP_SHORTCUT_COPY"
+        chmod +x "$DESKTOP_SHORTCUT_COPY"
+        if command -v gio >/dev/null 2>&1; then
+            gio set "$DESKTOP_SHORTCUT_COPY" metadata::trusted true || \
+                echo "Warning: Failed to set metadata::trusted on ${DESKTOP_SHORTCUT_COPY}"
+        else
+            echo "Warning: 'gio' not found; cannot set metadata::trusted on Desktop shortcut."
+        fi
+        echo "Desktop shortcut copied to $DESKTOP_SHORTCUT_COPY"
+    else
+        echo "Warning: Desktop folder '$DESKTOP_FOLDER' not found; skipping desktop copy."
+    fi
 else
     echo "Build failed: Executable not found in ${TMPDIR_DIST}/"
     exit 1
