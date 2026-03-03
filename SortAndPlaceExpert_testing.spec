@@ -5,7 +5,7 @@ a = Analysis(
     ['src/main_app.py'],
     pathex=[],
     binaries=[],
-    datas=[('src/TheTab_KGrgb_72ppi.png', './src'), ('/data/UCF Dropbox/Adan Vela/git-ucf/RealSenseExperimentRecorder/settings/env/ExpertSortPlaceExperiment.env', './experimentSettings.env'), ('/data/UCF Dropbox/Adan Vela/git-ucf/RealSenseExperimentRecorder/settings/camera/calibration_20260204_v1.json', './/data/UCF Dropbox/Adan Vela/git-ucf/RealSenseExperimentRecorder/settings/camera/calibration_20260204_v1.json')],
+    datas=[('src/TheTab_KGrgb_72ppi.png', './src'), ('/data/UCF Dropbox/Adan Vela/git-ucf/RealSenseExperimentRecorder/settings/env/ExpertSortPlaceExperiment_TESTING_grrrr.env', './experimentSettings.env'), ('/data/UCF Dropbox/Adan Vela/git-ucf/RealSenseExperimentRecorder/settings/camera/calibration_20260204_v1.json', './/data/UCF Dropbox/Adan Vela/git-ucf/RealSenseExperimentRecorder/settings/camera/calibration_20260204_v1.json')],
     hiddenimports=['tkinter'],
     hookspath=[],
     hooksconfig={},

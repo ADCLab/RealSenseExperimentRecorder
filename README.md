@@ -33,6 +33,14 @@ RealSenseExperimentRecorder streamlines data collection for sorting-and-placing 
    IMAGE_ASSET="src/TheTab_KGrgb_72ppi.png"
    ```
 
+### Keyboard Permissions (Linux)
+The app relies on the `keyboard` library for global shortcuts, which needs read access to `/dev/input/event*`. Add your user to the `input` group (once per machine) and re-login before running the recorder without `sudo`:
+
+```bash
+sudo usermod -aG input "$USER"
+# log out/in or reboot so the new group membership is applied
+```
+
 ## Building the Executable
 Use `build.sh`, passing the desired env filename (or path). The script resolves the camera configuration automatically.
 ```bash
