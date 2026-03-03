@@ -16,7 +16,7 @@ from PIL import Image
 #from pynput import keyboard
 from pandas import read_csv, DataFrame
 from dotenv import load_dotenv
-from utils import ExperimentState
+from utils import ExperimentState, log_bug
 from window import Window
 import keyboard
 import sys
@@ -64,8 +64,8 @@ def monitor_bluetooth_connection(window, myExpState):
             # Update the Bluetooth status in the GUI on the main thread
             try:
                 window.window.after(0, lambda status=t01_present: window.update_bluetooth_status(status))
-            except Exception:
-                pass
+            except Exception as dispatch_err:
+                log_bug(myExpState, f"Failed to update Bluetooth status: {dispatch_err}")
 
             # If the device is not present, wait and retry
             if not t01_present:
@@ -81,6 +81,7 @@ def monitor_bluetooth_connection(window, myExpState):
         print("\nBluetooth monitoring stopped.")
     except Exception as e:
         print(f"An error occurred in connection monitoring: {e}")
+        log_bug(myExpState, f"Bluetooth monitoring error: {e}")
 
 
 def handle_bluetooth_events(t01_device, window, myExpState):
@@ -110,8 +111,8 @@ def handle_bluetooth_events(t01_device, window, myExpState):
                                 print(f"Stylus touched at {event_time}")
                                 try:
                                     window.window.after(0, lambda ts=event_time: window.mark_date(ts))
-                                except Exception:
-                                    pass
+                                except Exception as dispatch_err:
+                                    log_bug(myExpState, f"Failed to dispatch mark_date: {dispatch_err}")
                                 last_event_time = event_time
 
     except OSError:
@@ -124,6 +125,7 @@ def handle_bluetooth_events(t01_device, window, myExpState):
             pass
     except Exception as e:
         print(f"An error occurred in event handling: {e}")
+        log_bug(myExpState, f"Bluetooth event handler error: {e}")
 
 
 
@@ -292,6 +294,7 @@ if __name__ == "__main__":
     myExpState.require_bluetooth = requireBluetooth
     myExpState.time_limit_seconds = time_limit_seconds
     myExpState.data_root = experiment_data_root
+    myExpState.bug_log_path = os.path.join(experiment_data_root, "bug.log")
 
     dataPath = os.path.join(experiment_data_root, myExpState.participantId)
     os.makedirs(dataPath, exist_ok=True)

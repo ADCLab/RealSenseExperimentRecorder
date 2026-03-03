@@ -5,7 +5,7 @@ import tkinter.messagebox
 from datetime import datetime
 import time
 
-from utils import resource_path
+from utils import resource_path, log_bug
 #from utils import DataMedium, resource_path
 
 
@@ -329,8 +329,12 @@ class Window:
             self.expState.is_trials_complete = True
 
         # Wait for main to finish writing to the file
+        wait_start = datetime.now().timestamp()
         while self.expState.is_finished_main is False:
             time.sleep(0.05)
+            if not self.expState.log_wait_alerted and datetime.now().timestamp() - wait_start > 5:
+                log_bug(self.expState, "Main thread still writing data after 5 seconds.")
+                self.expState.log_wait_alerted = True
 
         if self.time_limit_job:
             self.window.after_cancel(self.time_limit_job)
@@ -338,7 +342,10 @@ class Window:
         
         stop_camera = getattr(self.expState, "stop_camera", None)
         if callable(stop_camera):
-            stop_camera()
+            try:
+                stop_camera()
+            except Exception as camera_err:
+                log_bug(self.expState, f"Failed to stop camera: {camera_err}")
 
         self.window.quit()
 
@@ -370,6 +377,7 @@ class Window:
 
         self.time_limit_triggered = True
         print("Time limit reached; stopping experiment.")
+        log_bug(self.expState, "Time limit reached; stopping experiment.")
 
         if Window.is_in_trial:
             self.stop_trial()
