@@ -14,7 +14,6 @@ pyasn1-modules
 pyinstaller
 pyinstaller-hooks-contrib
 pynput
-keyboard
 pyrealsense2
 python-xlib
 requests

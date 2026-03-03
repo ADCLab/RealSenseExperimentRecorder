@@ -34,7 +34,7 @@ RealSenseExperimentRecorder streamlines data collection for sorting-and-placing 
    ```
 
 ### Keyboard Permissions (Linux)
-The app relies on the `keyboard` library for global shortcuts, which needs read access to `/dev/input/event*`. Add your user to the `input` group (once per machine) and re-login before running the recorder without `sudo`:
+The Ctrl hotkey listener now uses `python-evdev`, which reads from `/dev/input/event*`. Add your user to the `input` group (once per machine) and re-login before running the recorder without `sudo`:
 
 ```bash
 sudo usermod -aG input "$USER"

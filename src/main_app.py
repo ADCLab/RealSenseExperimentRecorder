@@ -18,9 +18,76 @@ from pandas import read_csv, DataFrame
 from dotenv import load_dotenv
 from utils import ExperimentState, log_bug
 from window import Window
-import keyboard
 import sys
 import subprocess
+
+
+def monitor_ctrl_hotkey(myExpState, on_release_callback):
+    """Listen for Ctrl key releases using python-evdev."""
+    ctrl_codes = {ecodes.KEY_LEFTCTRL, ecodes.KEY_RIGHTCTRL}
+    device_map: dict[int, InputDevice] = {}
+    attached_paths: set[str] = set()
+    permission_reported = False
+
+    def attach_devices():
+        nonlocal permission_reported
+        current_paths = set(attached_paths)
+        for path in list_devices():
+            if path in current_paths:
+                continue
+            try:
+                device = InputDevice(path)
+            except PermissionError:
+                if not permission_reported:
+                    log_bug(
+                        myExpState,
+                        f"Keyboard listener cannot open {path}; ensure the user can read /dev/input.",
+                    )
+                    permission_reported = True
+                continue
+            except (FileNotFoundError, OSError):
+                continue
+
+            caps = device.capabilities().get(ecodes.EV_KEY, [])
+            if any(code in caps for code in ctrl_codes):
+                device_map[device.fd] = device
+                attached_paths.add(path)
+            else:
+                device.close()
+
+    def detach_device(fd):
+        device = device_map.pop(fd, None)
+        if device:
+            attached_paths.discard(getattr(device, "path", ""))
+            try:
+                device.close()
+            except Exception:
+                pass
+
+    while True:
+        attach_devices()
+        if not device_map:
+            time.sleep(1)
+            continue
+
+        try:
+            readable, _, _ = select(device_map, [], [], 1.0)
+        except OSError:
+            continue
+
+        for fd in readable:
+            device = device_map.get(fd)
+            if not device:
+                continue
+            try:
+                for event in device.read():
+                    if event.type == ecodes.EV_KEY and event.code in ctrl_codes and event.value == 0:
+                        try:
+                            on_release_callback()
+                        except Exception as callback_err:
+                            log_bug(myExpState, f"Ctrl hotkey callback failed: {callback_err}")
+            except OSError:
+                detach_device(fd)
 
 def get_username():
     """Get the username of the user running the script."""
@@ -385,8 +452,10 @@ if __name__ == "__main__":
         except Exception:
             pass
 
-    # Hook the Ctrl key release
-    keyboard.on_release_key('ctrl', lambda e: on_ctrl_release())
+    # Hook the Ctrl key release via python-evdev
+    ctrl_thread = Thread(target=monitor_ctrl_hotkey, args=(myExpState, on_ctrl_release))
+    ctrl_thread.daemon = True
+    ctrl_thread.start()
 
     # Keyboard
     #def on_release(key):
