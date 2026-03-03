@@ -10,6 +10,19 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ENV_DIR="${SCRIPT_DIR}/settings/env"
 REQUESTED_ENV="$1"
 
+# Helper to copy assets into the final distribution folder
+copy_asset_to_dist() {
+    local source_path="$1"
+    local destination_path="$2"
+
+    if [[ ! -f "$source_path" ]]; then
+        echo "Asset '$source_path' is missing; cannot copy to distribution folder."
+        exit 1
+    fi
+
+    cp "$source_path" "$destination_path"
+}
+
 # Allow passing an absolute/relative path for compatibility; otherwise, look in settings/env
 if [[ -f "$REQUESTED_ENV" ]]; then
     ENV_FILE="$REQUESTED_ENV"
@@ -84,7 +97,7 @@ pyinstaller \
     --add-data "${IMAGE_ASSET}:./src" \
     --add-data "${ENV_FILE}:./experimentSettings.env" \
     --add-data "${CAMERA_CONFIGURATION}:./${CAMERA_CONFIGURATION}" \
-    src/main_bt_button_v2.py \
+    src/main_app.py \
     --distpath "${TMPDIR_DIST}" \
     --workpath "${TMPDIR_BUILD}"
 
@@ -96,11 +109,11 @@ if [[ -f "$OUTPUT_EXECUTABLE" ]]; then
     echo "Executable successfully moved to ${DIST_EXPERIMENT_FOLDER}/"
 
     # Copy the .env file to the DIST_EXPERIMENT_FOLDER manually (if not already included)
-    cp "$ENV_FILE" "${DIST_EXPERIMENT_FOLDER}/experimentSettings.env"
+    copy_asset_to_dist "$ENV_FILE" "${DIST_EXPERIMENT_FOLDER}/experimentSettings.env"
     echo ".env file successfully copied to ${DIST_EXPERIMENT_FOLDER}/"
 
     # Copy the camera configuration file to the DIST_EXPERIMENT_FOLDER
-    cp "$CAMERA_CONFIGURATION" "${DIST_EXPERIMENT_FOLDER}/"
+    copy_asset_to_dist "$CAMERA_CONFIGURATION" "${DIST_EXPERIMENT_FOLDER}/$(basename "$CAMERA_CONFIGURATION")"
     echo "Camera configuration file successfully copied to ${DIST_EXPERIMENT_FOLDER}/"
 
     # Create a desktop shortcut for the executable in ~/.local/share/applications

@@ -207,9 +207,14 @@ class Window:
 
         self.status_frame.pack(pady=(10, 10))
 
-    def update_bluetooth_status(self, is_connected: bool):
+    def update_bluetooth_status(self, is_connected):
         """Update the Bluetooth status label."""
-        if is_connected:
+        if is_connected is None:
+            self.bluetooth_status_label.config(
+                text="Bluetooth Status: Not Required",
+                foreground="gray",
+            )
+        elif is_connected:
             self.bluetooth_status_label.config(
                 text="Bluetooth Status: Connected to T01",
                 foreground="green",
