@@ -116,18 +116,27 @@ if [[ -f "$OUTPUT_EXECUTABLE" ]]; then
     copy_asset_to_dist "$CAMERA_CONFIGURATION" "${DIST_EXPERIMENT_FOLDER}/$(basename "$CAMERA_CONFIGURATION")"
     echo "Camera configuration file successfully copied to ${DIST_EXPERIMENT_FOLDER}/"
 
+    # Resolve the executable and icon paths for the desktop shortcut
+    EXECUTABLE_PATH="${DIST_EXPERIMENT_FOLDER}/${EXPERIMENT_NAME}_${EXPERIMENT_TAG}"
+    ICON_SOURCE="$IMAGE_ASSET"
+    if [[ ! -f "$ICON_SOURCE" && -f "${SCRIPT_DIR}/${IMAGE_ASSET}" ]]; then
+        ICON_SOURCE="${SCRIPT_DIR}/${IMAGE_ASSET}"
+    fi
+
     # Create a desktop shortcut for the executable in ~/.local/share/applications
     SHORTCUT_DIR="$HOME/.local/share/applications"
     mkdir -p "$SHORTCUT_DIR"
     DESKTOP_SHORTCUT="${SHORTCUT_DIR}/${EXPERIMENT_NAME}_${EXPERIMENT_TAG}.desktop"
-    echo "[Desktop Entry]" > "$DESKTOP_SHORTCUT"
-    echo "Version=1.0" >> "$DESKTOP_SHORTCUT"
-    echo "Type=Application" >> "$DESKTOP_SHORTCUT"
-    echo "Name=${EXPERIMENT_NAME}_${EXPERIMENT_TAG}" >> "$DESKTOP_SHORTCUT"
-    echo "Exec=gnome-terminal -- bash -c '/data/sync/superviseit_studies/sorting_experiments/dist_FOW_Sorting_Experiment_phase_1/run_puzzle_experiment.sh'" >> "$DESKTOP_SHORTCUT"
-    echo "Icon=/data/sync/superviseit_studies/sorting_experiments/src/puzzle.png" >> "$DESKTOP_SHORTCUT"
-    echo "Terminal=false" >> "$DESKTOP_SHORTCUT" # Set Terminal to true for sudo password prompt
-    echo "Path=${DIST_EXPERIMENT_FOLDER}" >> "$DESKTOP_SHORTCUT" # Set working directory
+    cat > "$DESKTOP_SHORTCUT" <<EOF
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=${EXPERIMENT_NAME}_${EXPERIMENT_TAG}
+Exec=gnome-terminal -- bash -c 'cd "${DIST_EXPERIMENT_FOLDER}" && "${EXECUTABLE_PATH}"'
+Icon=${ICON_SOURCE}
+Terminal=false
+Path=${DIST_EXPERIMENT_FOLDER}
+EOF
     chmod +x "$DESKTOP_SHORTCUT"
     echo "Desktop shortcut created at $DESKTOP_SHORTCUT"
 else
