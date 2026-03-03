@@ -126,7 +126,7 @@ def main(myExpState: str):
     
     # Wait for the trial numbers to be entered in the GUI
     while myExpState.is_trials_complete is False:
-        pass
+        time.sleep(0.05)
 
     trials: list[list[list]] = []
     for times in myExpState.trial_times:

@@ -3,6 +3,7 @@
 import tkinter
 import tkinter.messagebox
 from datetime import datetime
+import time
 
 from utils import resource_path
 #from utils import DataMedium, resource_path
@@ -331,6 +332,6 @@ class Window:
 
         # Wait for main to finish writing to the file
         while self.expState.is_finished_main is False:
-            pass
+            time.sleep(0.05)
 
         self.window.quit()
