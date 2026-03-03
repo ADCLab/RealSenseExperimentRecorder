@@ -61,8 +61,11 @@ def monitor_bluetooth_connection(window, myExpState):
             t01_present, t01_device = check_bluetooth_device_t01()
             myExpState.t01_present = t01_present
 
-            # Update the Bluetooth status in the GUI
-            window.update_bluetooth_status(t01_present)
+            # Update the Bluetooth status in the GUI on the main thread
+            try:
+                window.window.after(0, lambda status=t01_present: window.update_bluetooth_status(status))
+            except Exception:
+                pass
 
             # If the device is not present, wait and retry
             if not t01_present:
@@ -105,14 +108,20 @@ def handle_bluetooth_events(t01_device, window, myExpState):
                         if event.type == ecodes.EV_KEY and event.code == ecodes.BTN_TOUCH:
                             if event.value == 1:  # Stylus touched
                                 print(f"Stylus touched at {event_time}")
-                                window.mark_date(event_time)  # Mark the event in the GUI
+                                try:
+                                    window.window.after(0, lambda ts=event_time: window.mark_date(ts))
+                                except Exception:
+                                    pass
                                 last_event_time = event_time
 
     except OSError:
         # Handle the case where the device is disconnected
         print("Device 'T01' disconnected.")
         myExpState.t01_present = False
-        window.update_bluetooth_status(False)
+        try:
+            window.window.after(0, lambda: window.update_bluetooth_status(False))
+        except Exception:
+            pass
     except Exception as e:
         print(f"An error occurred in event handling: {e}")
 
@@ -359,12 +368,19 @@ if __name__ == "__main__":
         bluetooth_thread.daemon = True
         bluetooth_thread.start()
     else:
-        window.update_bluetooth_status(None)
+        try:
+            window.window.after(0, lambda: window.update_bluetooth_status(None))
+        except Exception:
+            pass
 
     def on_ctrl_release():
         """Mark date on keyboard ctrl_l release."""
         print("Ctrl_L key released")
-        window.mark_date(  datetime.now().timestamp()  )  # Trigger mark_date on Ctrl_L release
+        ts = datetime.now().timestamp()
+        try:
+            window.window.after(0, lambda: window.mark_date(ts))
+        except Exception:
+            pass
 
     # Hook the Ctrl key release
     keyboard.on_release_key('ctrl', lambda e: on_ctrl_release())
