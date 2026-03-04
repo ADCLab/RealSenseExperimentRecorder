@@ -154,11 +154,11 @@ EOF
         ICON_SOURCE="${SCRIPT_DIR}/${IMAGE_ASSET}"
     fi
 
-    # Create a desktop shortcut for the executable in ~/.local/share/applications
-    SHORTCUT_DIR="$HOME/.local/share/applications"
-    mkdir -p "$SHORTCUT_DIR"
-    DESKTOP_SHORTCUT="${SHORTCUT_DIR}/${EXPERIMENT_NAME}_${EXPERIMENT_TAG}.desktop"
-    cat > "$DESKTOP_SHORTCUT" <<EOF
+    # Create desktop shortcut directly on the Desktop
+    DESKTOP_FOLDER="$HOME/Desktop"
+    if [[ -d "$DESKTOP_FOLDER" ]]; then
+        DESKTOP_SHORTCUT="${DESKTOP_FOLDER}/run_puzzleExperimentRecorder.desktop"
+        cat > "$DESKTOP_SHORTCUT" <<EOF
 [Desktop Entry]
 Version=1.0
 Type=Application
@@ -168,24 +168,16 @@ Icon=${ICON_SOURCE}
 Terminal=true
 Path=${DIST_EXPERIMENT_FOLDER}
 EOF
-    chmod +x "$DESKTOP_SHORTCUT"
-    echo "Desktop shortcut created at $DESKTOP_SHORTCUT"
-
-    # Copy shortcut to Desktop and mark as trusted
-    DESKTOP_FOLDER="$HOME/Desktop"
-    if [[ -d "$DESKTOP_FOLDER" ]]; then
-        DESKTOP_SHORTCUT_COPY="${DESKTOP_FOLDER}/run_puzzleExperimentRecorder.desktop"
-        cp "$DESKTOP_SHORTCUT" "$DESKTOP_SHORTCUT_COPY"
-        chmod +x "$DESKTOP_SHORTCUT_COPY"
+        chmod +x "$DESKTOP_SHORTCUT"
         if command -v gio >/dev/null 2>&1; then
-            gio set "$DESKTOP_SHORTCUT_COPY" metadata::trusted true || \
-                echo "Warning: Failed to set metadata::trusted on ${DESKTOP_SHORTCUT_COPY}"
+            gio set "$DESKTOP_SHORTCUT" metadata::trusted true || \
+                echo "Warning: Failed to set metadata::trusted on ${DESKTOP_SHORTCUT}"
         else
             echo "Warning: 'gio' not found; cannot set metadata::trusted on Desktop shortcut."
         fi
-        echo "Desktop shortcut copied to $DESKTOP_SHORTCUT_COPY"
+        echo "Desktop shortcut created at $DESKTOP_SHORTCUT"
     else
-        echo "Warning: Desktop folder '$DESKTOP_FOLDER' not found; skipping desktop copy."
+        echo "Warning: Desktop folder '$DESKTOP_FOLDER' not found; skipping desktop shortcut creation."
     fi
 else
     echo "Build failed: Executable not found in ${TMPDIR_DIST}/"
