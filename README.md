@@ -35,6 +35,7 @@ RealSenseExperimentRecorder streamlines data collection for sorting-and-placing 
    TIME_LIMIT=45
    REQUIRE_BLUETOOTH=true
    SURVEY_URL="https://example.com"
+   OPEN_SURVEY_IN_BROWSER=false
    CAMERA_CONFIGURATION="calibration_20260204_v1.json"
    BASE_FOLDER="/data/superviseit_studies/"
    DATA_FOLDER="/data/testing/superviseit_studies/"

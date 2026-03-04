@@ -4,7 +4,7 @@ import csv
 import os
 import pwd
 import uuid
-#import webbrowser
+import webbrowser
 from datetime import datetime
 from threading import Thread
 from select import select
@@ -258,6 +258,7 @@ if __name__ == "__main__":
     experimentTag = os.getenv("EXPERIMENT_TAG").strip()
     cameraConfig = os.getenv("CAMERA_CONFIGURATION").strip()
     surveyURL = os.getenv("SURVEY_URL").strip()
+    openSurveyInBrowser = os.getenv("OPEN_SURVEY_IN_BROWSER", "false").strip().lower() in ("1", "true", "yes", "y")
     dataFolderRoot = os.getenv("DATA_FOLDER", "data").strip()
     timeLimitMinutes = os.getenv("TIME_LIMIT", "0").strip()
     try:
@@ -360,9 +361,20 @@ if __name__ == "__main__":
 
     # GUI
     window = Window(myExpState)
-    #webbrowser.open(surveyURL, new=1)
-    #username = get_username()
-    #open_browser_as_user(surveyURL, username)
+
+    if openSurveyInBrowser and surveyURL:
+        def launch_survey():
+            try:
+                if hasattr(os, "geteuid") and os.geteuid() == 0 and os.environ.get("SUDO_USER"):
+                    username = get_username()
+                    open_browser_as_user(surveyURL, username)
+                else:
+                    webbrowser.open(surveyURL, new=1)
+            except Exception as browser_err:
+                log_bug(myExpState, f"Failed to open survey URL: {browser_err}")
+
+        survey_thread = Thread(target=launch_survey, daemon=True)
+        survey_thread.start()
 
     # Start monitoring the Bluetooth connection only if required
     if requireBluetooth:
