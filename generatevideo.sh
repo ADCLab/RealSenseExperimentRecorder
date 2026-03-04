@@ -72,7 +72,51 @@ for idx in "${!participant_folders[@]}"; do
         TMPDIR=$(mktemp -d)
 
         rs-convert -c -i "$bagfile" -p $TMPDIR/
-        ffmpeg -loglevel quiet -r 30 -pattern_type glob -i "${TMPDIR}/*.png" "${mp4_dir}/${participantId}.mp4"
+
+        # determine frame rate.  first, look for any metadata file that might
+        # explicitly record it; rs-convert occasionally writes JSON or text
+        # alongside the images.  if that fails we fall back to inspecting
+        # timestamps embedded in the filenames, and lastly to the old default.
+        fps=30
+
+        # metadata search – any json containing a plausible key
+        if meta=$(find "$TMPDIR" -maxdepth 1 -type f -name '*meta*.json' | head -n1); then
+            if [[ -n "$meta" ]] && command -v jq &>/dev/null; then
+                # try a few common field names; jq will silently error if not present
+                for key in fps frame_rate frameRate rate; do
+                    val=$(jq -r ".${key}?" "$meta" 2>/dev/null)
+                    if [[ $val =~ ^[0-9]+(\.[0-9]+)?$ ]]; then
+                        fps=$val
+                        echo "metadata fps=$fps (from $meta, field $key)"
+                        break
+                    fi
+                done
+            fi
+        fi
+
+        # if we still haven't changed from the default, try the filename timestamps
+        if [[ $fps == 30 ]]; then
+            if ls "$TMPDIR"/*.png &> /dev/null; then
+                mapfile -t stamps < <(ls "$TMPDIR"/*.png | xargs -n1 basename | \
+                    grep -o -E '[0-9]+\.?[0-9]*' | sort -n)
+                if [[ ${#stamps[@]} -gt 1 ]]; then
+                    total=0
+                    prev=${stamps[0]}
+                    for ts in "${stamps[@]:1}"; do
+                        delta=$(awk -v a="$ts" -v b="$prev" 'BEGIN{print a-b}')
+                        total=$(awk -v t="$total" -v d="$delta" 'BEGIN{print t+d}')
+                        prev=$ts
+                    done
+                    avg=$(awk -v t="$total" -v n="${#stamps[@]}" 'BEGIN{print t/(n-1)}')
+                    if (( $(awk -v a="$avg" 'BEGIN{print (a>0)}') )); then
+                        fps=$(awk -v a="$avg" 'BEGIN{printf "%.2f", 1/a}')
+                    fi
+                fi
+            fi
+        fi
+
+        echo "using fps=$fps for ${participantId}"
+        ffmpeg -loglevel quiet -framerate "$fps" -pattern_type glob -i "${TMPDIR}/*.png" "${mp4_dir}/${participantId}.mp4"
 
         rm -rf $TMPDIR
       	# rm $bagfile
