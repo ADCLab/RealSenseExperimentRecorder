@@ -66,6 +66,11 @@ if [[ -z "$BASE_FOLDER" || -z "$EXPERIMENT_NAME" || -z "$EXPERIMENT_TAG" || -z "
     exit 1
 fi
 
+if [[ -z "$DATA_FOLDER_RAW" ]]; then
+    echo "DATA_FOLDER_RAW is required but not defined in $ENV_FILE."
+    exit 1
+fi
+
 # Create a dynamically named distribution folder within BASE_FOLDER
 DIST_EXPERIMENT_FOLDER="${BASE_FOLDER}/${EXPERIMENT_NAME}_${EXPERIMENT_TAG}"
 if [[ ! -d "$DIST_EXPERIMENT_FOLDER" ]]; then
@@ -128,6 +133,16 @@ if [[ -f "$OUTPUT_EXECUTABLE" ]]; then
         echo "Warning: puzzle.png not found at ${PUZZLE_ICON}."
     fi
 
+    # Copy generatevideo helper script for post-processing recordings
+    GENERATEVIDEO_SCRIPT="${SCRIPT_DIR}/generatevideo.sh"
+    if [[ -f "$GENERATEVIDEO_SCRIPT" ]]; then
+        copy_asset_to_dist "$GENERATEVIDEO_SCRIPT" "${DIST_EXPERIMENT_FOLDER}/generatevideo.sh"
+        chmod +x "${DIST_EXPERIMENT_FOLDER}/generatevideo.sh"
+        echo "generatevideo.sh copied to ${DIST_EXPERIMENT_FOLDER}/"
+    else
+        echo "Warning: generatevideo.sh not found at ${GENERATEVIDEO_SCRIPT}."
+    fi
+
     # Create an askpass helper script for GUI password prompts
     ASKPASS_SCRIPT="${DIST_EXPERIMENT_FOLDER}/askpass.sh"
     cat > "$ASKPASS_SCRIPT" <<'EOF'
@@ -146,6 +161,15 @@ sudo -A ./${EXECUTABLE_NAME}
 EOF
     chmod +x "$RUN_SCRIPT"
     echo "run_puzzleExperimentRecorder.sh created at ${RUN_SCRIPT}"
+
+    # Ensure participants.txt exists inside the BASE_FOLDER experiment directory
+    PARTICIPANTS_FILE="${BASE_FOLDER}/${EXPERIMENT_NAME}_${EXPERIMENT_TAG}/participants.txt"
+    if [[ ! -f "$PARTICIPANTS_FILE" ]]; then
+        touch "$PARTICIPANTS_FILE"
+        echo "participants.txt created at ${PARTICIPANTS_FILE}"
+    else
+        echo "participants.txt already exists at ${PARTICIPANTS_FILE}; leaving unchanged."
+    fi
 
     # Resolve the executable and icon paths for the desktop shortcut
     EXECUTABLE_PATH="${DIST_EXPERIMENT_FOLDER}/${EXECUTABLE_NAME}"

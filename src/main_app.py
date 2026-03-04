@@ -259,7 +259,7 @@ if __name__ == "__main__":
     cameraConfig = os.getenv("CAMERA_CONFIGURATION").strip()
     surveyURL = os.getenv("SURVEY_URL").strip()
     openSurveyInBrowser = os.getenv("OPEN_SURVEY_IN_BROWSER", "false").strip().lower() in ("1", "true", "yes", "y")
-    dataFolderRoot = os.getenv("DATA_FOLDER", "data").strip()
+    dataFolderRoot = os.getenv("DATA_FOLDER_RAW", "data").strip()
     timeLimitMinutes = os.getenv("TIME_LIMIT", "0").strip()
     try:
         time_limit_seconds = max(0, float(timeLimitMinutes) * 60)

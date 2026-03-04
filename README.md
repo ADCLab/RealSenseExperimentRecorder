@@ -7,7 +7,7 @@ RealSenseExperimentRecorder streamlines data collection for sorting-and-placing 
 - **RealSense capture pipeline** – Each participant run generates `.bag` recordings plus per-trial PNG snapshots inside the configured data directory.
 - **Bluetooth stylus monitoring** – When `REQUIRE_BLUETOOTH` is enabled, the app continuously watches for the T01 device and flags disconnections in the UI.
 - **Time limits & auto-shutdown** – A configurable `TIME_LIMIT` (minutes) automatically ends the session, saves data, and closes the camera safely.
-- **Bug logging** – Runtime issues are appended to `DATA_FOLDER/<EXPERIMENT_NAME>_<TAG>/bug.log`, including long file-write waits or camera shutdown errors.
+- **Bug logging** – Runtime issues are appended to `DATA_FOLDER_RAW/<EXPERIMENT_NAME>_<TAG>/bug.log`, including long file-write waits or camera shutdown errors.
 
 ## Getting Started
 1. **Clone** this repository and `cd` into `RealSenseExperimentRecorder`.
@@ -42,7 +42,7 @@ RealSenseExperimentRecorder streamlines data collection for sorting-and-placing 
    OPEN_SURVEY_IN_BROWSER=false
    CAMERA_CONFIGURATION="calibration_20260204_v1.json"
    BASE_FOLDER="/data/superviseit_studies/"
-   DATA_FOLDER="/data/testing/superviseit_studies/"
+   DATA_FOLDER_RAW="/data/testing/superviseit_studies/"
    IMAGE_ASSET="src/TheTab_KGrgb_72ppi.png"
    ```
 
@@ -65,7 +65,7 @@ The build process:
 - Copies the chosen env file and camera JSON into `${BASE_FOLDER}/${EXPERIMENT_NAME}_${EXPERIMENT_TAG}` alongside the executable.
 
 ## Runtime Behavior
-- Participant data, RealSense recordings, snapshots, CSVs, and `bug.log` live under `${DATA_FOLDER}/${EXPERIMENT_NAME}_${EXPERIMENT_TAG}/${PARTICIPANT_ID}`.
+- Participant data, RealSense recordings, snapshots, CSVs, and `bug.log` live under `${DATA_FOLDER_RAW}/${EXPERIMENT_NAME}_${EXPERIMENT_TAG}/${PARTICIPANT_ID}`.
 - Closing the GUI (manual exit, trials complete, or time-limit expiration) always waits for the writer thread to finish and stops the camera before quitting.
 - Bluetooth/UI operations in background threads route updates through `window.after(...)` to keep Tkinter thread-safe.
 
