@@ -164,7 +164,7 @@ Version=1.0
 Type=Application
 Name=run_puzzleExperimentRecorder
 Exec=gnome-terminal -- bash -c 'cd "${DIST_EXPERIMENT_FOLDER}" && ./run_puzzleExperimentRecorder.sh'
-Icon=${ICON_SOURCE}
+Icon=${DIST_EXPERIMENT_FOLDER}/${ICON_SOURCE}
 Terminal=true
 Path=${DIST_EXPERIMENT_FOLDER}
 EOF

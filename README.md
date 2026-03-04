@@ -27,6 +27,10 @@ RealSenseExperimentRecorder streamlines data collection for sorting-and-placing 
    > ```bash
    > sudo apt-get install libglib2.0-bin
    > ```
+   > Browser auto-launch via Firefox may log GTK/DBus warnings unless these packages are installed:
+   > ```bash
+   > sudo apt-get install libcanberra-gtk-module libcanberra-gtk3-module dbus-x11
+   > ```
 3. **Populate settings** under `settings/env/`. Each `.env` file should define at minimum:
    ```ini
    EXPERIMENT_NAME="SortAndPlaceExpert"
